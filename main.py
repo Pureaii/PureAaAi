@@ -23,7 +23,7 @@ CRYPTO_BOT_TOKEN = os.getenv("CRYPTO_BOT_TOKEN")
 GEMINI_TOKEN = os.getenv("GEMINI_TOKEN")
 IDEOGRAM_TOKEN = os.getenv("IDEOGRAM_TOKEN")
 LOG_BOT_TOKEN = os.getenv("LOG_BOT_TOKEN")
-WEBAPP_URL = os.getenv("WEBAPP_URL") # Сюда потом вставишь ссылку от Render
+WEBAPP_URL = os.getenv("WEBAPP_URL")
 
 LOG_CHAT_IDS = [7436250641, 8328958508]
 ADMIN_IDS = [7436250641, 8328958508] 
@@ -32,7 +32,9 @@ CARD_DETAILS = "2202 2085 7276 0628"
 bot = Bot(token=BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 log_bot = Bot(token=LOG_BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
-crypto = AioCryptoPay(token=CRYPTO_BOT_TOKEN, network=Networks.MAIN_NET)
+
+# Заглушка для крипто-бота (запустим его позже внутри main)
+crypto = None 
 admin_payment_messages = {}
 
 DB_FILE = "database.db"
@@ -283,6 +285,10 @@ async def api_generate(request):
         return web.json_response({"success": False, "error": str(e)[:100]})
 
 async def main():
+    # Запускаем крипто-кассу ИМЕННО ЗДЕСЬ, когда мотор уже заведен!
+    global crypto
+    crypto = AioCryptoPay(token=CRYPTO_BOT_TOKEN, network=Networks.MAIN_NET)
+    
     print("🔧 Инициализация базы данных...")
     await init_db()
     
@@ -292,7 +298,6 @@ async def main():
     runner = web.AppRunner(app)
     await runner.setup()
     
-    # Render динамически выдает порт через переменную окружения PORT (по умолчанию 10000 для локальных тестов)
     port = int(os.environ.get("PORT", 10000))
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
